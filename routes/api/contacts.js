@@ -1,83 +1,111 @@
-const express = require('express');
-
+const express = require("express");
 const Joi = require("joi");
-
-const contacts = require("../../models/contacts");
-
-const contactsSchema = Joi.object({
-  name: Joi.string().required(),
-  email: Joi.string().required(),
-  phone: Joi.string().required(),
-});
+const Contact = require("../../models/contact");
+const createError = require("../../helpers/createError");
 
 const router = express.Router();
 
-const createError = require("../../helpers/createError");
+const contactsSchema = Joi.object({
+  name: Joi.string().required(),
+  email: Joi.string()
+    .email({
+      minDomainSegments: 2,
+      tlds: { allow: ["com", "net"] },
+    })
+    .required(),
+  phone: Joi.string().required(),
+  favorite: Joi.boolean(),
+});
 
-router.get('/', async (req, res, next) => {
+const updateFavoriteSchema = Joi.object({
+  favorite: Joi.boolean().required(),
+});
+
+router.get("/", async (req, res, next) => {
   try {
-    const result = await contacts.listContacts();
+    const result = await Contact.find({}, "name email phone");
     res.json(result);
   } catch (error) {
     next(error);
   }
-}); 
+});
 
-router.get('/:contactId', async (req, res, next) => {
+router.get("/:contactId", async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await contacts.getContactById(contactId);
+    const result = await Contact.findById(contactId);
     if (!result) {
       throw createError(404, "Not Found");
     }
-    res.status(200).json(result); 
+    res.json(result);
   } catch (error) {
     next(error);
   }
-})
+});
 
-router.post('/', async (req, res, next) => {
+router.post("/", async (req, res, next) => {
   try {
     const { error } = contactsSchema.validate(req.body);
     if (error) {
-      throw createError(404, error.message);
+      throw createError(400, error.message);
     }
-    const { name, email, phone } = req.body;
-    const result = await contacts.addContact(name, email, phone);
+      if (req.body.favorite === undefined) {
+      req.body.favorite = false
+    }
+    const result = await Contact.create(req.body);
     res.status(201).json(result);
-  } catch (error) {
-next(error);
-  }
-})
-
-router.delete('/:contactId', async (req, res, next) => {
-  try {
-    const { contactId} = req.params;
-    const result = await contacts.removeContact(contactId);
-    if (!result) {
-     throw createError(404, "Not Found");
-    }
-    res.status(200).json({message: "Contact deleted"})
   } catch (error) {
     next(error);
   }
-})
+});
 
-router.put('/:contactId', async (req, res, next) => {
+router.delete("/:contactId", async (req, res, next) => {
   try {
- const { error } = contactsSchema.validate(req.body);
-    if (error) {
-      throw createError(404, error.message);
-    }
-    const {contactId } = req.params;
-    const result = await contacts.updateContact(contactId, req.body);
+    const { contactId } = req.params;
+    const result = await Contact.findByIdAndRemove(contactId);
     if (!result) {
       throw createError(404, "Not Found");
     }
-    return result;
-  } catch (error) { 
+    res.json({ message: "Contact deleted" });
+  } catch (error) {
     next(error);
   }
-})
+});
 
-module.exports = router
+router.put("/:contactId", async (req, res, next) => {
+  try {
+    const { error } = contactsSchema.validate(req.body);
+    if (error) {
+      throw createError(400, error.message);
+    }
+    const { contactId } = req.params;
+    const result = await Contact.findByIdAndUpdate(contactId, req.body, {
+      new: true,
+    });
+    if (!result) {
+      throw createError(404, "Not found");
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/:contactId/favorite", async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+    const { error } = updateFavoriteSchema.validate(req.body);
+    if (error) {
+      throw createError(400, error.message);
+    }
+    const result = await Contact.findByIdAndUpdate(contactId, req.body, { new: true });
+    if (!result) {
+      throw createError(404, "Not Found");
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+module.exports = router;
