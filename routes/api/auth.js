@@ -31,30 +31,6 @@ const updateSubscriptionSchema = Joi.object({
 const { SECRET_KEY } = process.env;
 const router = express.Router();
 
-// router.post("/register", async (req, res, next) => {
-//   try {
-//     const { error } = registerUserSchema.validate(req.body);
-//     if (error) {
-//       throw createError(400, error.message);
-//     }
-//     const { password, email, name } = req.body;
-//     const user = await User.findOne({ email });
-//     if (user) {
-//       throw createError(409, "Email in use");
-//     }
-
-//     const hashPassword = await createHashPassword(password);
-
-//     const newUser = await User.create({ email, name, password: hashPassword });
-//     res.status(201).json({
-//       email: newUser.email,
-//       name: newUser.name,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// });
-
 router.post("/register", async (req, res, next) => {
   try {
     const { error } = registerUserSchema.validate(req.body);
