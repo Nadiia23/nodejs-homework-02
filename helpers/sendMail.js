@@ -7,8 +7,8 @@ sgMail.setApiKey(SENDGRID_API_KEY);
 
 const sendMail = async (data) => {
     const mail = { ...data, from: "nadezhda.kylinich@gmail.com" };
-    /* eslint-disable no-undef */
-    transporter
+   
+    sgMail
         .sendMail(mail)
         .then(() => console.log("Mail sent"))
         .cathc((e) => console.log("e.message"));
