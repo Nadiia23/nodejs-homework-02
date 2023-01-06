@@ -1,4 +1,4 @@
 const createError = require("./createError");
 const createHashPassword = require("./createHashPassword");
-
-module.exports = { createError, createHashPassword };
+const sendMail = require("./sendMail");
+module.exports = { createError, createHashPassword, sendMail };
